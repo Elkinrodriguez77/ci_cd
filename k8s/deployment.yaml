@@ -1,0 +1,80 @@
+# =====================================================
+# Manifiesto Kubernetes - Despliegue de la app
+# =====================================================
+# IMPORTANTE: Este archivo es SOLO PARA ENSENANZA.
+# Para ejecutarlo necesitarias un cluster de Kubernetes.
+# En clase lo MOSTRAMOS para que vean como se ve un
+# despliegue real en K8s.
+# =====================================================
+
+# Un "Deployment" le dice a Kubernetes:
+# "quiero 3 copias identicas de mi app, siempre vivas,
+#  y si una se cae, levantala automaticamente"
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-clase-app
+  labels:
+    app: devops-clase
+spec:
+  replicas: 3  # Tres copias para alta disponibilidad
+  selector:
+    matchLabels:
+      app: devops-clase
+  template:
+    metadata:
+      labels:
+        app: devops-clase
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/tu-usuario/devops-clase:v1.0.0
+        ports:
+        - containerPort: 3000
+
+        # Health check: K8s pregunta cada 10 segundos
+        # "estas vivo?". Si no responde, te reinicia.
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          periodSeconds: 10
+
+        # Readiness: "estas listo para recibir trafico?"
+        # Si dice que no, K8s no te manda usuarios.
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          periodSeconds: 5
+
+        # Limites de recursos para que una app no se coma
+        # toda la maquina y tumbe a las demas
+        resources:
+          requests:
+            cpu: "100m"      # 0.1 CPU
+            memory: "128Mi"
+          limits:
+            cpu: "500m"      # max 0.5 CPU
+            memory: "256Mi"
+
+        env:
+        - name: APP_VERSION
+          value: "v1.0.0"
+        - name: APP_ENV
+          value: "produccion"
+
+---
+# Un "Service" expone el deployment al mundo
+# (le da una direccion estable, balancea trafico)
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-clase-service
+spec:
+  selector:
+    app: devops-clase
+  ports:
+  - port: 80
+    targetPort: 3000
+  type: LoadBalancer
