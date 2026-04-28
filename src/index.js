@@ -41,6 +41,18 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Nuevo endpoint agregado via feature branch - demo Git Flow
+  if (req.url === '/aboutme') {
+    res.statusCode = 200;
+    res.end(JSON.stringify({
+      app: 'DevOps Demo - Utadeo',
+      estudiantes: 'Arquitectura de Software 2026',
+      pipeline: 'GitHub Actions → Render',
+      nuevo_en_v2: true
+    }));
+    return;
+  }
+
   // Endpoint que falla a propósito - lo usaremos en clase
   // para demostrar observabilidad / alertas.
   if (req.url === '/error') {
